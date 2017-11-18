@@ -6,7 +6,7 @@ local Action={}
 local gate
 local watchdog
 local fd 
-
+local message = {}
 skynet.start(function()
 	skynet.dispatch("lua", function(session, source, cmd, ...)
 		if CMD[cmd] then
@@ -23,6 +23,12 @@ function CMD.start( conf )
 	--skynet.error(fd,watchdog,gate)
 	receiveMessage()
 end
+function CMD.toClient( data )
+	local success,jsonstr = pcall(json.encode,data)
+	if success then
+		socket.write(fd,jsonstr.."\n")
+	end
+end
 function receiveMessage( )
 	fd=tonumber(fd)
 	socket.start(fd)
@@ -30,7 +36,8 @@ function receiveMessage( )
 		while true do
 			local str = socket.readline(fd)
 			if str then
-				socket.write(fd, str.."\n")
+				-- socket.write(fd, str.."\n")
+				toAllPeople(str)
 				handleMessage(str)
 			else
 				socket.close(fd)
@@ -44,18 +51,13 @@ function handleMessage( str )
 	skynet.error(success,data)
 	if success then
 		local f
-		if data["action"] then
+		if type(data)=='table' and data["action"] then
            f =  Action[data["action"]]
            f(data)
 		end
 	end
 end
-function toClient( data )
-	local success,jsonstr = pcall(json.encode,data)
-	if success then
-		socket.write(fd,jsonstr.."\n")
-	end
-end
+
 function Action.login( data )
     --login success add user
     math.randomseed(os.time())    
@@ -70,7 +72,13 @@ end
 function Action.reconnect( data )
 	skynet.error("reconnect")
 end
-
+function toAllPeople( data )
+	local agents = skynet.call("USERDATA","lua","getAllUser")
+	for k,v in pairs(agents) do
+		print(k,v)
+		skynet.send(v,"lua","toClient",data)
+	end
+end
 function Action.sendMessageTo( data )
     local name = data.name
 	local agent = skynet.call("USERDATA","lua","getUser",name)
