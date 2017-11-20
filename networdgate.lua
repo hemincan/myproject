@@ -6,7 +6,14 @@ function CMD.open( conf )
 		local id = socket.listen(conf.address, conf.port)
 		socket.start(id , function(id, addr)
 			print("connect from " .. addr .. " " .. id)
-			skynet.send(watchdog, "lua", "socket","open",id,addr)
+			skynet.send(watchdog, "lua", "socket","open","socket",id,addr)
+			
+		end)
+
+		local id_websocket = socket.listen(conf.address, conf.websocket_port)
+		socket.start(id_websocket , function(id, addr)
+			print("connect from " .. addr .. " " .. id)
+			skynet.send(watchdog, "lua", "socket","open","websocket",id,addr)
 			
 		end)
 end

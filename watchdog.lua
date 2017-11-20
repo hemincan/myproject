@@ -4,10 +4,10 @@ local CMD = {}
 local SOCKET = {}
 local gate
 
-function SOCKET.open(fd, addr)
+function SOCKET.open(_type,fd, addr)--type is websocket or a normal socket
 	skynet.error("New client from : " .. addr)
 	local agent = skynet.newservice("useragent")
-	skynet.send(agent, "lua", "start", { gate = gate, fd = fd, watchdog = skynet.self() })
+	skynet.send(agent, "lua", "start", { gate = gate, fd = fd, watchdog = skynet.self(),type=_type })
 end
 
 

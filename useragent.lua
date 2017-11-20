@@ -1,11 +1,18 @@
 local skynet = require "skynet"
 local socket = require "skynet.socket"
 local json = require "cjson"
+local string = require "string"
+local websocket = require "websocket"
+local httpd = require "http.httpd"
+local urllib = require "http.url"
+local sockethelper = require "http.sockethelper"
+
 local CMD = {}
 local Action={}
 local gate
 local watchdog
 local fd 
+local _type  --websocket or socket
 local message = {}
 skynet.start(function()
 	skynet.dispatch("lua", function(session, source, cmd, ...)
@@ -21,22 +28,73 @@ function CMD.start( conf )
 	watchdog=conf.watchdog
 	fd=conf.fd
 	--skynet.error(fd,watchdog,gate)
-	receiveMessage()
+	if conf.type=="socket" then
+		receiveMessage_socket()
+	elseif conf.type=="websocket" then
+	    receiveMessage_websocket()
+    end
+	
 end
+----------------------
+----------------------
+-------websocket------
+local handler = {}
+function handler.on_open(ws)
+    print(string.format("%d::open", ws.id))
+end
+
+function handler.on_message(ws, message)
+    print(string.format("%d receive:%s", ws.id, message))
+    toAllPeople(message)
+	handleMessage(message)
+    -- ws:send_text(message .. "from server")
+    --ws:close()
+end
+
+function handler.on_close(ws, code, reason)
+    print(string.format("%d close:%s  %s", ws.id, code, reason))
+end
+
+local function handle_socket(id)
+    -- limit request body size to 8192 (you can pass nil to unlimit)
+    local code, url, method, header, body = httpd.read_request(sockethelper.readfunc(id), 8192)
+    if code then
+        
+        if url == "/ws" then
+            local ws = websocket.new(id, header, handler)
+            ws:start()
+        end
+
+    end
+
+
+end
+
+
+
+---------------------
+---------------------
 function CMD.toClient( data )
 	local success,jsonstr = pcall(json.encode,data)
 	if success then
 		socket.write(fd,jsonstr.."\n")
 	end
 end
-function receiveMessage( )
+function receiveMessage_websocket( )
+	fd=tonumber(fd)
+	socket.start(fd)
+	pcall(handle_socket, fd)
+end
+function receiveMessage_socket( )
 	fd=tonumber(fd)
 	socket.start(fd)
 	skynet.fork(function (  )
+
 		while true do
 			local str = socket.readline(fd)
 			if str then
 				-- socket.write(fd, str.."\n")
+				skynet.error(str)
 				toAllPeople(str)
 				handleMessage(str)
 			else
