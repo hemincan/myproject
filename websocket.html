@@ -4,7 +4,8 @@
   <title>skynet WebSocket example</title>
 </head>
 <body>   
- <button onclick="send()">发送消息</button>
+ <button onclick="send()">sendMessage</button>
+ <button onclick="playChess()">playChess</button>
   <script>
     var ws = new WebSocket('ws://127.0.0.1:8889/ws');
 
@@ -23,8 +24,20 @@
      alert("error");
     };
     function send() {
-        
-        ws.send("message");
+        var login={}
+        login.action="login";
+        ws.send(JSON.stringify(login));
+        var start={}
+        start.action="startNewGame"
+        ws.send(JSON.stringify(start));
+    };
+    function playChess() {
+        var play={}
+        play.action="playChess";
+        play.x=1;
+        play.y=1;
+        ws.send(JSON.stringify(play));
+
     }
   </script>
 </body>

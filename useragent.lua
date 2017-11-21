@@ -14,6 +14,9 @@ local watchdog
 local fd 
 local _type  --websocket or socket
 local message = {}
+local myroom 
+local name
+local web_socket --websocket
 skynet.start(function()
 	skynet.dispatch("lua", function(session, source, cmd, ...)
 		if CMD[cmd] then
@@ -27,6 +30,8 @@ function CMD.start( conf )
 	gate=conf.gate
 	watchdog=conf.watchdog
 	fd=conf.fd
+	_type=conf.type
+
 	--skynet.error(fd,watchdog,gate)
 	if conf.type=="socket" then
 		receiveMessage_socket()
@@ -40,6 +45,7 @@ end
 -------websocket------
 local handler = {}
 function handler.on_open(ws)
+	web_socket=ws
     print(string.format("%d::open", ws.id))
 end
 
@@ -77,13 +83,19 @@ end
 function CMD.toClient( data )
 	local success,jsonstr = pcall(json.encode,data)
 	if success then
-		socket.write(fd,jsonstr.."\n")
+		if _type=="socket" then
+			socket.write(fd,jsonstr.."\n")
+		end
+		if _type=="websocket" then
+			web_socket:send_text(jsonstr)
+		end
 	end
 end
 function receiveMessage_websocket( )
 	fd=tonumber(fd)
 	socket.start(fd)
 	pcall(handle_socket, fd)
+	
 end
 function receiveMessage_socket( )
 	fd=tonumber(fd)
@@ -119,7 +131,7 @@ end
 function Action.login( data )
     --login success add user
     math.randomseed(os.time())    
-    local name = math.random(1000)
+    name = math.random(1000)
 	skynet.send("USERDATA","lua","addUser",name,skynet.self())
 	local agent = skynet.call("USERDATA","lua","getUser",name)
 	skynet.error(agent)
@@ -141,4 +153,11 @@ function Action.sendMessageTo( data )
     local name = data.name
 	local agent = skynet.call("USERDATA","lua","getUser",name)
 	skynet.send(agent,"lua","toClient",data)
+end
+function Action.startNewGame( data )
+	myroom=skynet.newservice("gobangroom")
+	skynet.call(myroom,"lua","addPlayer",name)
+end
+function Action.playChess( data )
+	local success = skynet.call(myroom,"lua","playChess",name,data.x,data.y)
 end
