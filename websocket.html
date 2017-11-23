@@ -6,6 +6,7 @@
 <body>   
  <button onclick="send()">sendMessage</button>
  <button onclick="playChess()">playChess</button>
+ <div id="mess"></div>
   <script>
     var ws = new WebSocket('ws://127.0.0.1:8889/ws');
 
@@ -15,7 +16,8 @@
      
     };
     ws.onmessage = function(ev){
-     alert(ev.data);
+
+     console.log(ev.data);
     };
     ws.onclose = function(ev){
      alert("close");
@@ -26,16 +28,21 @@
     function send() {
         var login={}
         login.action="login";
+
+        login.name="WebSocket"+Math.floor(Math.random()*100)
         ws.send(JSON.stringify(login));
         var start={}
-        start.action="startNewGame"
+        start.action="newGame"
         ws.send(JSON.stringify(start));
     };
+     var play={}
+     play.x=1
+      play.y=1
     function playChess() {
-        var play={}
+       
         play.action="playChess";
-        play.x=1;
-        play.y=1;
+        play.x=play.x+1
+      play.y=play.y+1
         ws.send(JSON.stringify(play));
 
     }

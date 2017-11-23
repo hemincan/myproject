@@ -1,0 +1,7 @@
+{"action":"login","name":"name"}
+{"action":"newGame"}
+{"action":"playChess","x":"x","y":"y"}
+
+
+
+{"replyAction":"joinSuccess"}

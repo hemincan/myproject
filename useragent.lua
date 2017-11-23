@@ -14,7 +14,7 @@ local watchdog
 local fd 
 local _type  --websocket or socket
 local message = {}
-local myroom 
+local myroom
 local name
 local web_socket --websocket
 skynet.start(function()
@@ -127,14 +127,20 @@ function handleMessage( str )
 		end
 	end
 end
-
+function CMD.joinSuccess( room )
+	myroom=room
+	skynet.error("joinSuccess")
+	local data= {}
+	data.replyAction="joinSuccess"
+	local success = skynet.call(myroom,"lua","addPlayer",name,skynet.self())
+	CMD.toClient(data)
+end
 function Action.login( data )
-    --login success add user
-    math.randomseed(os.time())    
-    name = math.random(1000)
+   
+    name = data.name
 	skynet.send("USERDATA","lua","addUser",name,skynet.self())
-	local agent = skynet.call("USERDATA","lua","getUser",name)
-	skynet.error(agent)
+	-- local agent = skynet.call("USERDATA","lua","getUser",name)
+	-- skynet.error(agent)
 end
 function Action.logout( data )
 	skynet.error("logout")
@@ -154,9 +160,9 @@ function Action.sendMessageTo( data )
 	local agent = skynet.call("USERDATA","lua","getUser",name)
 	skynet.send(agent,"lua","toClient",data)
 end
-function Action.startNewGame( data )
-	myroom=skynet.newservice("gobangroom")
-	skynet.call(myroom,"lua","addPlayer",name)
+function Action.newGame( data )
+	skynet.send("ROOMMANAGER","lua","newGame",skynet.self(),name)
+
 end
 function Action.playChess( data )
 	local success = skynet.call(myroom,"lua","playChess",name,data.x,data.y)

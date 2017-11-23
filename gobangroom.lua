@@ -25,17 +25,17 @@ function initChessborad(  )
 		end
 	end
 end
-function CMD.addPlayer( name )
+function CMD.addPlayer( name,agent )
 	if player[white]~=nil and player[black]~=nil  then
 		return false
 	end
 	if player[white]==nil then
-		player[white]=name
+		player[white]={name=name,agent=agent}
 		player[name]=white
 		return true
 	end
 	if player[black]==nil then
-		player[black]=name
+		player[black]={name=name,agent=agent}
 		player[name]=black
 		return true
 	end
@@ -64,6 +64,10 @@ function gameBegin(  )
 	skynet.fork(function (  )
 		while true do
 			-- printChessBorad(  )
+			if player[white]~=nil and player[black]~=nil then
+				skynet.send(player[white].agent,"lua","toClient",chessborad)
+				skynet.send(player[black].agent,"lua","toClient",chessborad)
+			end
 			skynet.sleep(200)
 		end
 
