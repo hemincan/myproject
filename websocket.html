@@ -6,6 +6,7 @@
 <body>   
  <button onclick="send()">sendMessage</button>
  <button onclick="playChess()">playChess</button>
+  <button onclick="heatBeat()">heatBeat</button>
  <div id="mess"></div>
   <script>
     var ws = new WebSocket('ws://127.0.0.1:8889/ws');
@@ -29,7 +30,7 @@
         var login={}
         login.action="login";
 
-        login.name="WebSocket"+Math.floor(Math.random()*100)
+        login.name="WebSocket46"//+Math.floor(Math.random()*100)
         ws.send(JSON.stringify(login));
         var start={}
         start.action="newGame"
@@ -42,9 +43,14 @@
        
         play.action="playChess";
         play.x=play.x+1
-      play.y=play.y+1
+        play.y=play.y+1
         ws.send(JSON.stringify(play));
 
+    };
+    function heatBeat() {
+    	var play={}
+    	play.action="heatBeat"
+    	ws.send(JSON.stringify(play))
     }
   </script>
 </body>
